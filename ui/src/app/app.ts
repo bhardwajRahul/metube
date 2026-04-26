@@ -81,6 +81,8 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
   playlistItemLimit!: number;
   splitByChapters: boolean;
   chapterTemplate: string;
+  clipStart = '';
+  clipEnd = '';
   subtitleLanguage: string;
   subtitleMode: string;
   ytdlOptionsPresets: string[] = [];
@@ -242,6 +244,8 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
     this.splitByChapters = this.cookieService.get('metube_split_chapters') === 'true';
     // Will be set from backend configuration, use empty string as placeholder
     this.chapterTemplate = this.cookieService.get('metube_chapter_template') || '';
+    this.clipStart = this.cookieService.get('metube_clip_start') || '';
+    this.clipEnd = this.cookieService.get('metube_clip_end') || '';
     this.subtitleLanguage = this.cookieService.get('metube_subtitle_language') || 'en';
     this.subtitleMode = this.cookieService.get('metube_subtitle_mode') || 'prefer_manual';
     this.ytdlOptionsPresets = this.loadYtdlOptionsPresetsFromCookie();
@@ -579,10 +583,14 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
     if (!this.validateYtdlOptionsOverrides(payload.ytdlOptionsOverrides)) {
       return;
     }
+    // Subscriptions do not support clip ranges (backend rejects clip fields).
+    const { clipStart: _clipStart, clipEnd: _clipEnd, ...subscribeBase } = payload;
+    void _clipStart;
+    void _clipEnd;
     this.subscribeInProgress = true;
     this.subscriptionsSvc
       .subscribe({
-        ...payload,
+        ...subscribeBase,
         checkIntervalMinutes: this.checkIntervalMinutes,
         titleRegex: tr,
       })
@@ -805,6 +813,14 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
       this.chapterTemplate = typeof configuredTemplate === 'string' ? configuredTemplate : '';
     }
     this.cookieService.set('metube_chapter_template', this.chapterTemplate, { expires: this.settingsCookieExpiryDays });
+  }
+
+  clipStartChanged() {
+    this.cookieService.set('metube_clip_start', this.clipStart, { expires: this.settingsCookieExpiryDays });
+  }
+
+  clipEndChanged() {
+    this.cookieService.set('metube_clip_end', this.clipEnd, { expires: this.settingsCookieExpiryDays });
   }
 
   subtitleLanguageChanged() {
@@ -1033,6 +1049,8 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
       ytdlOptionsOverrides: allowYtdlOptionsOverrides
         ? (overrides.ytdlOptionsOverrides ?? this.ytdlOptionsOverrides)
         : '',
+      clipStart: overrides.clipStart ?? this.clipStart,
+      clipEnd: overrides.clipEnd ?? this.clipEnd,
     };
   }
 
@@ -1106,6 +1124,8 @@ export class App implements AfterViewInit, OnInit, OnDestroy {
         ? [...download.ytdl_options_presets]
         : [],
       ytdlOptionsOverrides: download.ytdl_options_overrides ? JSON.stringify(download.ytdl_options_overrides) : '',
+      clipStart: download.clip_start != null ? String(download.clip_start) : '',
+      clipEnd: download.clip_end != null ? String(download.clip_end) : '',
     });
     this.downloads.delById('done', [key]).subscribe();
   }

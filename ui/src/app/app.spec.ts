@@ -194,6 +194,30 @@ describe('App', () => {
     expect(payload.titleRegex).toBe('EPISODE');
   });
 
+  it('omits clip fields from subscribe payload', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    const subs = TestBed.inject(SubscriptionsService) as unknown as SubscriptionsServiceStub;
+    app.addUrl = 'https://example.com/channel';
+    app.clipStart = '1:00';
+    app.clipEnd = '2:00';
+    app.addSubscription();
+    expect(subs.subscribeCalls.length).toBe(1);
+    const payload = subs.subscribeCalls[0] as Record<string, unknown>;
+    expect('clipStart' in payload).toBe(false);
+    expect('clipEnd' in payload).toBe(false);
+  });
+
+  it('buildAddPayload includes clip times', () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    app.clipStart = '0:10';
+    app.clipEnd = '1:20';
+    const payload = app['buildAddPayload']();
+    expect(payload.clipStart).toBe('0:10');
+    expect(payload.clipEnd).toBe('1:20');
+  });
+
   it('blocks subscribe with invalid title regex', () => {
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
     const fixture = TestBed.createComponent(App);

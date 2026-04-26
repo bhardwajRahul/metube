@@ -428,6 +428,34 @@
                     }
                   </div>
                 </div>
+                @if (downloadType === 'video' || downloadType === 'audio') {
+                <div class="col-md-6">
+                  <div class="input-group">
+                    <span class="input-group-text">Clip start</span>
+                    <input type="text"
+                      class="form-control"
+                      name="clipStart"
+                      [(ngModel)]="clipStart"
+                      (change)="clipStartChanged()"
+                      placeholder="e.g. 2:26"
+                      [disabled]="addInProgress || subscribeInProgress || downloads.loading"
+                      ngbTooltip="Optional start time (seconds, M:SS, or H:MM:SS). Blank = from start or YouTube &t= in URL.">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="input-group">
+                    <span class="input-group-text">Clip end</span>
+                    <input type="text"
+                      class="form-control"
+                      name="clipEnd"
+                      [(ngModel)]="clipEnd"
+                      (change)="clipEndChanged()"
+                      placeholder="e.g. 3:24"
+                      [disabled]="addInProgress || subscribeInProgress || downloads.loading"
+                      ngbTooltip="Optional end time. Blank = until end of media.">
+                  </div>
+                </div>
+                }
               </div>
 
               <!-- Behavior -->
